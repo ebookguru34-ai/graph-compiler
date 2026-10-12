@@ -24,14 +24,31 @@ SCHEMA = json.load(open(os.path.join(ROOT, "tests", "example_schema.json")))
 CHAR = {"id": "char-mira", "name": "Mira", "system": "You are {{char}}, a cheerful smith. Talk to {{user}}.", "greeting": "Hi {{user}}, I'm {{char}}!",
         "examples": "<USER>: hi\n<BOT>: hello there", "voice": None, "graph": None}
 
-SCENARIO = [{"say": "Hello there!"}, {"say": "Please remember my name is Bob."}, {"say": "What is my name? Remember it."},
-            {"regen": True}, {"say": "Tell me about swords and the forge.", "arm": "trig"}, {"say": "note that I like tea"},
+SCENARIO = [{"say": "Hello there! Is the forge open?"}, {"say": "Please remember my name is Bob."}, {"say": "What is my name? Remember it."},
+            {"regen": True}, {"say": "Tell me about swords and the forge. Where is the tavern? Will it snow?", "arm": "trig"}, {"say": "note that I like tea"},
             {"undo": True}, {"say": "my name is Robert actually"}, {"say": "How do you feel?"}, {"regen": True}]
 
 
+FX = os.path.join(ROOT, "tests", "fixtures")
+
+
 def seed_for(ns):
+    """Same starting storage for both runners: profile schema, global + character lorebooks and document collections."""
+    from pgc_runtime import lore, rag
     p = {"schema": SCHEMA, "values": {"energy": 80}, "commits": []}
-    return {"pgc.profile." + (ns or "_global"): json.dumps(p)}
+    world = lore.parse_lorebook(json.load(open(os.path.join(FX, "world_info.json"), encoding="utf-8")))
+    book = lore.parse_lorebook(json.load(open(os.path.join(FX, "card_v2_book.json"), encoding="utf-8")))
+    md = open(os.path.join(FX, "handbook.md"), encoding="utf-8").read()
+    txt = open(os.path.join(FX, "notes.txt"), encoding="utf-8", newline="").read()
+    doc = lambda i, n, t, s: {"id": "d%d" % i, "name": n, "addedAt": 0, "size": s, "overlap": 60, "chunks": rag.chunk_text(t, s, 60)}  # noqa: E731
+    seed = {"pgc.profile." + (ns or "_global"): json.dumps(p),
+            "pgc.lore._global": json.dumps({"entries": world}), "pgc.rag._global": json.dumps({"docs": [doc(1, "handbook.md", md, 300)]})}
+    for k, e in enumerate(book):
+        e["id"] = "b%d" % k
+    if ns:
+        seed["pgc.lore." + ns] = json.dumps({"entries": book})
+        seed["pgc.rag." + ns] = json.dumps({"docs": [doc(2, "notes.txt", txt, 120)]})
+    return seed
 
 
 def http(path, body=None):

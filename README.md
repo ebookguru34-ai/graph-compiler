@@ -30,9 +30,10 @@ Characters can be the app's own export (`pgc_character_v1`), Tavern V1, or V2/V3
 
 ## Supported nodes
 
-All 22 node types are supported: chat_input, system_prompt, chat_prompt, template, instruct_wrap,
+All 24 node types are supported: chat_input, system_prompt, chat_prompt, template, instruct_wrap,
 generate, persona, memory_read, memory_write, profile, profile_update, stats, compare, every_n,
-manual_trigger, json_extract, summarize, memory_search, merge, regex, condition and chat_output.
+manual_trigger, json_extract, summarize, memory_search, **lorebook**, **rag_retrieve**, merge, regex,
+condition and chat_output.
 The semantics, defaults and skip rules are ported from `src/graph/nodes.ts` and `runner.ts`.
 An unknown node type, a cycle or a malformed file fails at compile time with a clear message.
 
@@ -40,17 +41,51 @@ JavaScript regexes (Regex and Condition nodes) are translated to Python `re`. Th
 `gimsu`, named groups, and `$1`, `$&`, `$<name>` and `$$` in replacements. Lookbehind and other
 features shared by JS and Python work. Exotic JS-only syntax (for example the `v` flag) does not.
 
+## Lorebooks and documents (Lorebook / RAG Retrieve nodes)
+
+Lorebooks and document collections live in the data dir (`pgc.lore.<charId|_global>.json` and `pgc.rag.<charId|_global>.json`).
+They use the same format as the app, so you can copy them over. You can load them at compile time:
+
+```
+python graphc.py compile graph.json -o out/ --lore world.json --docs handbook.md --docs notes.txt
+python graphc.py compile graph.json -o out/ --character card.png --char-lore extra.json --char-docs bio.md
+```
+
+| flag | what it does |
+|---|---|
+| `--lore` | imports SillyTavern world info, a V2 `character_book` or our export into the global book |
+| `--docs` | chunks `.txt` / `.md` files into the global collection |
+| `--chunk-size` / `--overlap` | control chunking (defaults 800 / 100 chars) |
+| `--char-lore` / `--char-docs` | target the `--character`'s own namespace |
+
+A card's `character_book` is imported into that character's lorebook automatically the first time it runs.
+
+Later, you can manage the data dir with:
+
+```
+python -m pgc_runtime.manage --data out/pgc_data [--ns char-mira] import-lore world.json
+python -m pgc_runtime.manage --data out/pgc_data import-doc rules.md --size 600 --overlap 80
+python -m pgc_runtime.manage --data out/pgc_data list
+python -m pgc_runtime.manage --data out/pgc_data embed --url http://localhost:5001 [--fresh]
+python -m pgc_runtime.manage --data out/pgc_data export-lore world.json
+```
+
+RAG uses KoboldCPP `/v1/embeddings`, which needs an embeddings model. Vectors are cached per chunk hash in
+`pgc.emb.*`. If embeddings fail, retrieval falls back to BM25 keyword search, as it does in the app.
+
 ## Tests
 
 ```
 python tests/run_tests.py        # compile all examples, run them, compare with the app's runner
 python tests/test_character.py   # character cards + chat_cli end to end
+python tests/test_knowledge.py   # lorebook + RAG units, and chunking/parsing/matching parity with the app's TS
 ```
 
 `tests/fake_kobold.py` is a deterministic fake KoboldCPP. Its replies depend only on the prompt,
 and it includes leaked `User:` lines, `<think>` blocks and JSON with trailing commas. `run_tests.py`
-does three things. It compiles every graph in `examples/`: the app's five built-in examples, an
-emotion-assessor graph, and `all-nodes.json`, which uses every node type. It runs a 10-step scenario
+does three things. It compiles every graph in `examples/`: the app's six built-in examples (including Lorebook + RAG), an
+emotion-assessor graph, and `all-nodes.json`, which uses every node type. Both runners start from the same seeded
+lorebooks and document collections (`tests/fixtures`). It runs a 10-step scenario
 (chat, regenerate, manual trigger, undo) with and without a character. Then it runs the same scenario
 through the **app's own `runGraph`**, bundled with esbuild and run in node with fetch pointed at the
 fake server. For each graph it compares the replies, every request body sent to KoboldCPP and the

@@ -12,6 +12,7 @@ Commands: /regen  regenerate the last reply (rolls back its memory/profile write
 """
 import argparse
 import json
+import os
 import sys
 
 import pgc_runtime as rt
@@ -25,7 +26,8 @@ def main():
     ap.add_argument("--character", help="character JSON (app export or Tavern card) or PNG card")
     ap.add_argument("--system", default="You are a helpful assistant.", help="system prompt when no character")
     ap.add_argument("--user", default="User", help="your name")
-    ap.add_argument("--data", default="pgc_data", help="folder for memory/profile JSON")
+    ap.add_argument("--data", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "pgc_data"),
+                    help="folder for memory/profile/lorebook/document JSON (default: pgc_data next to this file)")
     ap.add_argument("--no-stream", action="store_true")
     a = ap.parse_args()
 
@@ -117,7 +119,9 @@ chat_cli.py      terminal chat with /regen /undo
 1. Start KoboldCPP (default http://localhost:5001).
 2. `python chat_cli.py --template ChatML` (add `--character mycard.png` for a Tavern card or app export).
 
-Memory stores, profiles and the embedding cache are JSON files in `pgc_data/` (`--data` to move it).
+Memory stores, profiles, lorebooks, document collections and the embedding cache are JSON files in `pgc_data/`
+next to `chat_cli.py` (`--data` to move it). Add lore/docs with
+`python -m pgc_runtime.manage --data pgc_data import-lore world.json` / `import-doc notes.md` (see `--help`).
 They use the same keys as the app (`pgc.mem.*`, `pgc.profile.*`, `pgc.emb.*`), one file per key.
 
 ## API

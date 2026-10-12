@@ -68,6 +68,11 @@ def main(argv=None):
     c.add_argument("-o", "--out", default=None, help="output folder (default: <graph_name>_out next to the graph)")
     c.add_argument("--name", help="module name (default: from the graph name)")
     c.add_argument("--character", help="bundle a default character (app export JSON, Tavern JSON or PNG card)")
+    c.add_argument("--lore", action="append", default=[], metavar="FILE", help="import a lorebook (SillyTavern world info / character_book / our export) into the global book; repeatable")
+    c.add_argument("--docs", action="append", default=[], metavar="FILE", help="import a .txt/.md document into the global RAG collection; repeatable")
+    c.add_argument("--char-lore", action="append", default=[], metavar="FILE", help="like --lore but into the --character's own book")
+    c.add_argument("--char-docs", action="append", default=[], metavar="FILE", help="like --docs but into the --character's own collection")
+    c.add_argument("--chunk-size", type=int, default=800); c.add_argument("--overlap", type=int, default=100)
     k = sub.add_parser("check", help="validate a graph")
     k.add_argument("graph")
     sub.add_parser("nodes", help="list supported node types")
@@ -88,6 +93,21 @@ def main(argv=None):
             return 2
         out = a.out or os.path.join(os.path.dirname(os.path.abspath(a.graph)), slug(a.name or g.get("name") or "graph") + "_out")
         module = compile_python(g, out, a.name, a.character)
+        if a.lore or a.docs or a.char_lore or a.char_docs:
+            from pgc_runtime.kv import KV
+            from pgc_runtime import manage, character as chmod
+            kv = KV(os.path.join(out, "pgc_data"))
+            cid = chmod.load(a.character)["id"] if a.character else None
+            if (a.char_lore or a.char_docs) and not cid:
+                raise GraphError("--char-lore/--char-docs need --character")
+            for f in a.lore:
+                print(f"  lore {f}: {manage.import_lore(kv, f)} entries (global)")
+            for f in a.char_lore:
+                print(f"  lore {f}: {manage.import_lore(kv, f, cid)} entries ({cid})")
+            for f in a.docs:
+                print(f"  doc  {f}: {len(manage.import_doc(kv, f, None, a.chunk_size, a.overlap)['chunks'])} chunks (global)")
+            for f in a.char_docs:
+                print(f"  doc  {f}: {len(manage.import_doc(kv, f, cid, a.chunk_size, a.overlap)['chunks'])} chunks ({cid})")
         print(f"Compiled {g.get('name')!r} ({len(g['nodes'])} nodes) -> {os.path.join(out, module + '.py')}")
         print(f"  run:  cd \"{out}\" && python chat_cli.py")
         return 0

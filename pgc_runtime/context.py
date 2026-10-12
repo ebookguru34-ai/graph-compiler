@@ -29,6 +29,10 @@ class Ctx:
             self.kv = KV(self.data_dir)
         self.tpl = get_template(self.template)
         self.samplers = {**DEFAULT_SAMPLERS, **(self.samplers or {})}
+        # a card's character_book seeds that character's lorebook once (edits in the data dir win afterwards)
+        if self.character and self.character.get("lorebook") and self.kv.get_item("pgc.lore." + self.character["id"]) is None:
+            from .lore import save_lore
+            save_lore(self.kv, self.character["lorebook"], self.character["id"])
 
     # values the app derives from the active character
     @property

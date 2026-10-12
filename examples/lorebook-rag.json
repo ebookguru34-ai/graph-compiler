@@ -1,0 +1,128 @@
+{
+ "version": 1,
+ "name": "Lorebook + RAG",
+ "nodes": [
+  {
+   "id": "in",
+   "type": "chat_input",
+   "x": 30,
+   "y": 300,
+   "config": {}
+  },
+  {
+   "id": "sys",
+   "type": "system_prompt",
+   "x": 30,
+   "y": 20,
+   "config": {}
+  },
+  {
+   "id": "lore",
+   "type": "lorebook",
+   "x": 290,
+   "y": 120,
+   "config": {
+    "depth": 4,
+    "budget": 500
+   }
+  },
+  {
+   "id": "rag",
+   "type": "rag_retrieve",
+   "x": 290,
+   "y": 260,
+   "config": {
+    "method": "hybrid",
+    "topK": 4,
+    "budget": 600,
+    "history": 1
+   }
+  },
+  {
+   "id": "kb",
+   "type": "merge",
+   "x": 540,
+   "y": 180,
+   "config": {
+    "name": "Knowledge",
+    "text": "{{a}}\n\n{{b}}"
+   }
+  },
+  {
+   "id": "cp",
+   "type": "chat_prompt",
+   "x": 790,
+   "y": 120,
+   "config": {
+    "memoryHeader": ""
+   }
+  },
+  {
+   "id": "gen",
+   "type": "generate",
+   "x": 1040,
+   "y": 120,
+   "config": {
+    "stream": true
+   }
+  },
+  {
+   "id": "out",
+   "type": "chat_output",
+   "x": 1290,
+   "y": 120,
+   "config": {}
+  }
+ ],
+ "edges": [
+  {
+   "id": "e1",
+   "from": "sys",
+   "fromPort": "text",
+   "to": "cp",
+   "toPort": "system"
+  },
+  {
+   "id": "e2",
+   "from": "in",
+   "fromPort": "history",
+   "to": "cp",
+   "toPort": "history"
+  },
+  {
+   "id": "e3",
+   "from": "lore",
+   "fromPort": "text",
+   "to": "kb",
+   "toPort": "a"
+  },
+  {
+   "id": "e4",
+   "from": "rag",
+   "fromPort": "text",
+   "to": "kb",
+   "toPort": "b"
+  },
+  {
+   "id": "e5",
+   "from": "kb",
+   "fromPort": "text",
+   "to": "cp",
+   "toPort": "memory"
+  },
+  {
+   "id": "e6",
+   "from": "cp",
+   "fromPort": "prompt",
+   "to": "gen",
+   "toPort": "prompt"
+  },
+  {
+   "id": "e7",
+   "from": "gen",
+   "fromPort": "text",
+   "to": "out",
+   "toPort": "text"
+  }
+ ]
+}

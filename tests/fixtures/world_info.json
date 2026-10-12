@@ -1,0 +1,10 @@
+{"name": "Test world", "entries": {
+ "0": {"uid": 0, "key": ["forge", "anvil"], "keysecondary": [], "comment": "The Old Forge", "content": "The Old Forge sits at the end of Ash Street. Its fire never goes out.", "constant": false, "disable": false, "order": 100, "caseSensitive": false, "matchWholeWords": true},
+ "1": {"uid": 1, "key": ["sword"], "comment": "Swords", "content": "Swords in this town are forged from sky-iron, which rings when struck.", "constant": false, "disable": false, "order": 200, "matchWholeWords": true},
+ "2": {"uid": 2, "key": ["swords"], "comment": "Swords (plural, partial)", "content": "Partial match entry: fires on 'swords' without whole-word.", "constant": false, "disable": false, "order": 50, "matchWholeWords": false},
+ "3": {"uid": 3, "key": [], "comment": "Setting", "content": "Setting: the mountain town of Kestrel, late autumn.", "constant": true, "disable": false, "order": 10},
+ "4": {"uid": 4, "key": ["tea"], "comment": "Disabled tea", "content": "This must never appear.", "disable": true, "order": 999},
+ "5": {"uid": 5, "key": ["/rob(ert)?\\b/i"], "comment": "Robert regex", "content": "Robert is the miller's son, known for his loud laugh. He owes the smith three silver coins and has been avoiding the forge for a week.", "order": 150},
+ "6": {"uid": 6, "key": ["Bob"], "comment": "Bob case-sensitive", "content": "Bob (capital B) is a regular at the tavern.", "caseSensitive": true, "order": 120},
+ "7": {"uid": 7, "key": ["feel"], "comment": "Feelings", "content": "Mira hides her feelings behind jokes.", "order": 90}
+}}

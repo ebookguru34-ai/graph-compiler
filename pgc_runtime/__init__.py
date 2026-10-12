@@ -5,8 +5,8 @@ pipeline/promptSafety.ts). Stdlib only.
 """
 from .util import SKIP, js_str, fill
 from .context import Ctx, Env, TurnResult
-from . import kobold, templates, safety, kv, memory, profile, search, nodes, character, graph, turn
+from . import kobold, templates, safety, kv, memory, profile, search, nodes, character, graph, turn, lore, rag
 
 __all__ = ["SKIP", "js_str", "fill", "Ctx", "Env", "TurnResult", "kobold", "templates", "safety", "kv",
-           "memory", "profile", "search", "nodes", "character", "graph", "turn"]
+           "memory", "profile", "search", "nodes", "character", "graph", "turn", "lore", "rag"]
 __version__ = "0.1.0"

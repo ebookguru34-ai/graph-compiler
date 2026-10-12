@@ -23,6 +23,15 @@ def _s(v):
     return v if isinstance(v, str) else ""
 
 
+def _book(o):
+    from .lore import parse_lorebook
+    try:
+        e = parse_lorebook(o)
+        return e or None
+    except ValueError:
+        return None
+
+
 def _slug(name):
     return "char-" + (re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "unnamed")
 
@@ -34,7 +43,8 @@ def from_json(o):
         if not _s(o.get("name")):
             raise ValueError("Character has no name")
         return {"id": _s(o.get("id")) or _slug(o["name"]), "name": o["name"], "system": _s(o.get("system")), "greeting": _s(o.get("greeting")),
-                "examples": _s(o.get("examples")), "voice": _s(o.get("voice")) or None, "graph": o.get("graph") if isinstance(o.get("graph"), dict) else None}
+                "examples": _s(o.get("examples")), "voice": _s(o.get("voice")) or None, "graph": o.get("graph") if isinstance(o.get("graph"), dict) else None,
+                "lorebook": _book({"entries": o["lorebook"]}) if isinstance(o.get("lorebook"), list) else None}
     d = o["data"] if isinstance(o.get("data"), dict) else o
     name = _s(d.get("name")) or _s(o.get("name")) or _s(o.get("char_name"))
     if not name:
@@ -44,7 +54,7 @@ def from_json(o):
              ("Personality: " + _s(d["personality"])) if _s(d.get("personality")) else "", ("Scenario: " + scen) if scen else ""]
     return {"id": _slug(name), "name": name, "system": "\n\n".join(p.strip() for p in parts if p and p.strip()),
             "greeting": _s(d.get("first_mes")) or _s(o.get("char_greeting")), "examples": _s(d.get("mes_example")) or _s(o.get("example_dialogue")),
-            "voice": None, "graph": None}
+            "voice": None, "graph": None, "lorebook": _book({"data": d}) if d.get("character_book") else None}
 
 
 def png_text_chunks(buf):
