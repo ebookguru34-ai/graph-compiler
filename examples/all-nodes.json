@@ -1,0 +1,452 @@
+{
+ "version": 1,
+ "name": "All nodes",
+ "nodes": [
+  {
+   "id": "in",
+   "type": "chat_input",
+   "x": 0,
+   "y": 0,
+   "config": {}
+  },
+  {
+   "id": "sys",
+   "type": "system_prompt",
+   "x": 0,
+   "y": 0,
+   "config": {}
+  },
+  {
+   "id": "prof",
+   "type": "profile",
+   "x": 0,
+   "y": 0,
+   "config": {}
+  },
+  {
+   "id": "stats",
+   "type": "stats",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "rules": "energy decay 3\ntrust.player -> 50 by 2\nbad rule here"
+   }
+  },
+  {
+   "id": "cmp",
+   "type": "compare",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "path": "trust.player",
+    "op": ">=",
+    "value": "52"
+   }
+  },
+  {
+   "id": "trig",
+   "type": "manual_trigger",
+   "x": 0,
+   "y": 0,
+   "config": {}
+  },
+  {
+   "id": "cond",
+   "type": "condition",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "pattern": "remember|my name is"
+   }
+  },
+  {
+   "id": "mw",
+   "type": "memory_write",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "store": "facts",
+    "mode": "append",
+    "maxEntries": 5
+   }
+  },
+  {
+   "id": "ms",
+   "type": "memory_search",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "store": "facts",
+    "topK": 2
+   }
+  },
+  {
+   "id": "mse",
+   "type": "memory_search",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "store": "facts",
+    "topK": 1,
+    "method": "embeddings"
+   }
+  },
+  {
+   "id": "mr",
+   "type": "memory_read",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "store": "facts",
+    "lastN": 2,
+    "joiner": " | "
+   }
+  },
+  {
+   "id": "sum",
+   "type": "summarize",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "threshold": 20,
+    "store": "summary"
+   }
+  },
+  {
+   "id": "every",
+   "type": "every_n",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "mode": "every N turns",
+    "n": 2
+   }
+  },
+  {
+   "id": "merge",
+   "type": "merge",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "text": "{{a}}\n\nFacts: {{b}}\nTrusted: {{user}}"
+   }
+  },
+  {
+   "id": "tpl",
+   "type": "template",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "text": "{{a}}\nRecall: {{b}}\nAlso: {{c}}"
+   }
+  },
+  {
+   "id": "cp",
+   "type": "chat_prompt",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "memoryHeader": "[State]"
+   }
+  },
+  {
+   "id": "gen",
+   "type": "generate",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "stream": true
+   }
+  },
+  {
+   "id": "rx",
+   "type": "regex",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "pattern": "(Reply) (\\w+)",
+    "flags": "g",
+    "replace": "$1#$2"
+   }
+  },
+  {
+   "id": "crit",
+   "type": "persona",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "name": "Critic"
+   }
+  },
+  {
+   "id": "pu",
+   "type": "profile_update",
+   "x": 0,
+   "y": 0,
+   "config": {}
+  },
+  {
+   "id": "emo_iw",
+   "type": "instruct_wrap",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "prefill": "{"
+   }
+  },
+  {
+   "id": "emo_tpl",
+   "type": "template",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "text": "Rate the emotion in: {{a}}"
+   }
+  },
+  {
+   "id": "emo_gen",
+   "type": "generate",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "stream": false,
+    "temperature": "0.1",
+    "stop": "\\n\\n"
+   }
+  },
+  {
+   "id": "jx",
+   "type": "json_extract",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "paths": "emotion\nintensity\nmissing",
+    "fallback": "?"
+   }
+  },
+  {
+   "id": "emo_mw",
+   "type": "memory_write",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "store": "emo",
+    "mode": "replace"
+   }
+  },
+  {
+   "id": "mout",
+   "type": "merge",
+   "x": 0,
+   "y": 0,
+   "config": {
+    "text": "{{a}}{{b}}"
+   }
+  },
+  {
+   "id": "out",
+   "type": "chat_output",
+   "x": 0,
+   "y": 0,
+   "config": {}
+  }
+ ],
+ "edges": [
+  {
+   "id": "e1",
+   "from": "in",
+   "fromPort": "message",
+   "to": "cond",
+   "toPort": "text"
+  },
+  {
+   "id": "e2",
+   "from": "cond",
+   "fromPort": "match",
+   "to": "mw",
+   "toPort": "text"
+  },
+  {
+   "id": "e3",
+   "from": "in",
+   "fromPort": "message",
+   "to": "ms",
+   "toPort": "query"
+  },
+  {
+   "id": "e4",
+   "from": "in",
+   "fromPort": "history",
+   "to": "sum",
+   "toPort": "history"
+  },
+  {
+   "id": "e5",
+   "from": "sum",
+   "fromPort": "text",
+   "to": "every",
+   "toPort": "text"
+  },
+  {
+   "id": "e6",
+   "from": "sys",
+   "fromPort": "text",
+   "to": "merge",
+   "toPort": "a"
+  },
+  {
+   "id": "e7",
+   "from": "ms",
+   "fromPort": "text",
+   "to": "merge",
+   "toPort": "b"
+  },
+  {
+   "id": "e8",
+   "from": "prof",
+   "fromPort": "text",
+   "to": "tpl",
+   "toPort": "a"
+  },
+  {
+   "id": "e9",
+   "from": "mse",
+   "fromPort": "text",
+   "to": "tpl",
+   "toPort": "b"
+  },
+  {
+   "id": "e10",
+   "from": "stats",
+   "fromPort": "text",
+   "to": "tpl",
+   "toPort": "c"
+  },
+  {
+   "id": "e11",
+   "from": "merge",
+   "fromPort": "text",
+   "to": "cp",
+   "toPort": "system"
+  },
+  {
+   "id": "e12",
+   "from": "tpl",
+   "fromPort": "text",
+   "to": "cp",
+   "toPort": "memory"
+  },
+  {
+   "id": "e13",
+   "from": "in",
+   "fromPort": "history",
+   "to": "cp",
+   "toPort": "history"
+  },
+  {
+   "id": "e14",
+   "from": "cp",
+   "fromPort": "prompt",
+   "to": "gen",
+   "toPort": "prompt"
+  },
+  {
+   "id": "e15",
+   "from": "gen",
+   "fromPort": "text",
+   "to": "rx",
+   "toPort": "text"
+  },
+  {
+   "id": "e16",
+   "from": "rx",
+   "fromPort": "text",
+   "to": "cmp",
+   "toPort": "text"
+  },
+  {
+   "id": "e17",
+   "from": "cmp",
+   "fromPort": "match",
+   "to": "crit",
+   "toPort": "text"
+  },
+  {
+   "id": "e20",
+   "from": "in",
+   "fromPort": "message",
+   "to": "pu",
+   "toPort": "context"
+  },
+  {
+   "id": "e21",
+   "from": "rx",
+   "fromPort": "text",
+   "to": "pu",
+   "toPort": "text"
+  },
+  {
+   "id": "e22",
+   "from": "trig",
+   "fromPort": "text",
+   "to": "emo_tpl",
+   "toPort": "a"
+  },
+  {
+   "id": "e23",
+   "from": "emo_tpl",
+   "fromPort": "text",
+   "to": "emo_iw",
+   "toPort": "user"
+  },
+  {
+   "id": "e24",
+   "from": "emo_iw",
+   "fromPort": "prompt",
+   "to": "emo_gen",
+   "toPort": "prompt"
+  },
+  {
+   "id": "e25",
+   "from": "emo_gen",
+   "fromPort": "text",
+   "to": "jx",
+   "toPort": "text"
+  },
+  {
+   "id": "e26",
+   "from": "jx",
+   "fromPort": "all",
+   "to": "emo_mw",
+   "toPort": "text"
+  },
+  {
+   "id": "e27",
+   "from": "mr",
+   "fromPort": "text",
+   "to": "emo_tpl",
+   "toPort": "b"
+  },
+  {
+   "id": "e18",
+   "from": "crit",
+   "fromPort": "text",
+   "to": "mout",
+   "toPort": "a"
+  },
+  {
+   "id": "e19",
+   "from": "cmp",
+   "fromPort": "else",
+   "to": "mout",
+   "toPort": "b"
+  },
+  {
+   "id": "e28",
+   "from": "mout",
+   "fromPort": "text",
+   "to": "out",
+   "toPort": "text"
+  }
+ ]
+}

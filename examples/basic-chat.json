@@ -1,0 +1,73 @@
+{
+ "version": 1,
+ "name": "Basic chat",
+ "nodes": [
+  {
+   "id": "in",
+   "type": "chat_input",
+   "x": 40,
+   "y": 140,
+   "config": {}
+  },
+  {
+   "id": "sys",
+   "type": "system_prompt",
+   "x": 40,
+   "y": 20,
+   "config": {}
+  },
+  {
+   "id": "cp",
+   "type": "chat_prompt",
+   "x": 300,
+   "y": 60,
+   "config": {}
+  },
+  {
+   "id": "gen",
+   "type": "generate",
+   "x": 560,
+   "y": 80,
+   "config": {
+    "stream": true
+   }
+  },
+  {
+   "id": "out",
+   "type": "chat_output",
+   "x": 820,
+   "y": 100,
+   "config": {}
+  }
+ ],
+ "edges": [
+  {
+   "id": "e1",
+   "from": "sys",
+   "fromPort": "text",
+   "to": "cp",
+   "toPort": "system"
+  },
+  {
+   "id": "e2",
+   "from": "in",
+   "fromPort": "history",
+   "to": "cp",
+   "toPort": "history"
+  },
+  {
+   "id": "e3",
+   "from": "cp",
+   "fromPort": "prompt",
+   "to": "gen",
+   "toPort": "prompt"
+  },
+  {
+   "id": "e4",
+   "from": "gen",
+   "fromPort": "text",
+   "to": "out",
+   "toPort": "text"
+  }
+ ]
+}

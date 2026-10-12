@@ -1,0 +1,122 @@
+{
+ "version": 1,
+ "name": "Chat with memory stream",
+ "nodes": [
+  {
+   "id": "in",
+   "type": "chat_input",
+   "x": 30,
+   "y": 200,
+   "config": {}
+  },
+  {
+   "id": "sys",
+   "type": "system_prompt",
+   "x": 30,
+   "y": 30,
+   "config": {}
+  },
+  {
+   "id": "mr",
+   "type": "memory_read",
+   "x": 30,
+   "y": 330,
+   "config": {
+    "store": "notes",
+    "lastN": 10
+   }
+  },
+  {
+   "id": "cp",
+   "type": "chat_prompt",
+   "x": 300,
+   "y": 120,
+   "config": {}
+  },
+  {
+   "id": "gen",
+   "type": "generate",
+   "x": 560,
+   "y": 120,
+   "config": {
+    "stream": true
+   }
+  },
+  {
+   "id": "out",
+   "type": "chat_output",
+   "x": 820,
+   "y": 120,
+   "config": {}
+  },
+  {
+   "id": "cond",
+   "type": "condition",
+   "x": 300,
+   "y": 340,
+   "config": {
+    "pattern": "remember|my name is|note that"
+   }
+  },
+  {
+   "id": "mw",
+   "type": "memory_write",
+   "x": 560,
+   "y": 340,
+   "config": {
+    "store": "notes"
+   }
+  }
+ ],
+ "edges": [
+  {
+   "id": "e1",
+   "from": "sys",
+   "fromPort": "text",
+   "to": "cp",
+   "toPort": "system"
+  },
+  {
+   "id": "e2",
+   "from": "in",
+   "fromPort": "history",
+   "to": "cp",
+   "toPort": "history"
+  },
+  {
+   "id": "e3",
+   "from": "mr",
+   "fromPort": "text",
+   "to": "cp",
+   "toPort": "memory"
+  },
+  {
+   "id": "e4",
+   "from": "cp",
+   "fromPort": "prompt",
+   "to": "gen",
+   "toPort": "prompt"
+  },
+  {
+   "id": "e5",
+   "from": "gen",
+   "fromPort": "text",
+   "to": "out",
+   "toPort": "text"
+  },
+  {
+   "id": "e6",
+   "from": "in",
+   "fromPort": "message",
+   "to": "cond",
+   "toPort": "text"
+  },
+  {
+   "id": "e7",
+   "from": "cond",
+   "fromPort": "match",
+   "to": "mw",
+   "toPort": "text"
+  }
+ ]
+}

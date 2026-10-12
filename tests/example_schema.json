@@ -1,0 +1,42 @@
+[
+ {
+  "key": "mood",
+  "type": "text",
+  "description": "current emotional state, one or two words",
+  "default": "neutral"
+ },
+ {
+  "key": "trust.player",
+  "type": "number",
+  "description": "how much the character trusts the user",
+  "min": 0,
+  "max": 100,
+  "default": 50
+ },
+ {
+  "key": "energy",
+  "type": "number",
+  "description": "physical energy",
+  "min": 0,
+  "max": 100,
+  "default": 80
+ },
+ {
+  "key": "inventory",
+  "type": "list",
+  "description": "items the character carries",
+  "default": []
+ },
+ {
+  "key": "relationships",
+  "type": "map",
+  "description": "name -> short description of relationship",
+  "default": {}
+ },
+ {
+  "key": "name",
+  "type": "text",
+  "description": "character name",
+  "locked": true
+ }
+]

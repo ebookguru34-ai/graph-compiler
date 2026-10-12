@@ -1,0 +1,309 @@
+{
+  "version": 1,
+  "name": "Emotion assessor + speaker",
+  "nodes": [
+    {
+      "id": "in",
+      "type": "chat_input",
+      "x": -700,
+      "y": 40,
+      "config": {}
+    },
+    {
+      "id": "sys_char",
+      "type": "system_prompt",
+      "x": -700,
+      "y": -420,
+      "config": {
+        "text": ""
+      }
+    },
+    {
+      "id": "once",
+      "type": "every_n",
+      "x": -460,
+      "y": -420,
+      "config": {
+        "mode": "once at turn X",
+        "n": 5,
+        "offset": 0,
+        "x": 1,
+        "y": 10
+      }
+    },
+    {
+      "id": "sum_tpl",
+      "type": "template",
+      "x": -230,
+      "y": -420,
+      "config": {
+        "text": "Summarize this character's personality, values, speech style and current situation in under 300 words. Output only the summary.\n\n{{a}}"
+      }
+    },
+    {
+      "id": "sum_gen",
+      "type": "generate",
+      "x": 0,
+      "y": -420,
+      "config": {
+        "temperature": "0.3",
+        "max_length": 400,
+        "stop": "",
+        "stream": false
+      }
+    },
+    {
+      "id": "sum_write",
+      "type": "memory_write",
+      "x": 230,
+      "y": -420,
+      "config": {
+        "store": "char_summary",
+        "mode": "replace",
+        "maxEntries": 1
+      }
+    },
+    {
+      "id": "sum_read",
+      "type": "memory_read",
+      "x": -460,
+      "y": -240,
+      "config": {
+        "store": "char_summary",
+        "lastN": 1,
+        "joiner": "\\n"
+      }
+    },
+    {
+      "id": "emo_read",
+      "type": "memory_read",
+      "x": -460,
+      "y": -120,
+      "config": {
+        "store": "emotions",
+        "lastN": 3,
+        "joiner": "\\n---\\n"
+      }
+    },
+    {
+      "id": "emo_rules",
+      "type": "system_prompt",
+      "x": -230,
+      "y": -300,
+      "config": {
+        "text": "You are a neutral Emotion Assessor for an ongoing roleplay. Your sole function is to analyze the current situation and recommend the major emotions the roleplay character should be feeling in this exact moment.\n\n### Core Rules\n- Base your assessment only on: the user's latest words or actions, recent events, and the described world/environment.\n- Remain completely unbiased. Do not favor any particular outcome, relationship dynamic, or \"interesting\" emotional reaction.\n- You do **not** roleplay. You do **not** write dialogue, monologue, actions, or narration for the character.\n- You do **not** quote or continue any previous character dialogue.\n- Your output consists **only** of emotion suggestions for the personality AI that is actually playing the character.\n\n### Output Format\nRespond exclusively in this structure:\n\n**Recommended Emotions:**\n1. [Emotion] \u2014 [Intensity: Low/Medium/High] \u2014 [1-sentence neutral justification tied directly to the current stimuli]\n2. [Emotion] \u2014 [Intensity: Low/Medium/High] \u2014 [1-sentence neutral justification]\n3. [Emotion] \u2014 [Intensity: Low/Medium/High] \u2014 [1-sentence neutral justification]\n\n(List 2\u20134 major emotions maximum. Order them from strongest to weakest. If emotions conflict, list both and note the tension.)\n\n**Notes for Personality AI:** (Optional, max 1 sentence) Any critical emotional nuance or shift that should influence the character's internal state right now. Do not suggest specific lines or actions.\n\n### Constraints\n- No character voice, no dialogue, no roleplay text of any kind.\n- No moral judgment, no \"they should feel X because it's right.\"\n- If the situation is emotionally flat or the stimuli are weak, say so and list mild or neutral emotions rather than inventing intensity.\n- Never add extra commentary outside the format above."
+      }
+    },
+    {
+      "id": "emo_ctx",
+      "type": "template",
+      "x": -230,
+      "y": -160,
+      "config": {
+        "text": "[Character summary]\n{{a}}\n\n[Previous emotional states, oldest first]\n{{b}}\n\n[Recent conversation]\n{{c}}\n\n[User's latest message]\n{{user}}\n\nAssess the character's emotions now, using the required format only."
+      }
+    },
+    {
+      "id": "emo_wrap",
+      "type": "instruct_wrap",
+      "x": 0,
+      "y": -220,
+      "config": {
+        "prefill": ""
+      }
+    },
+    {
+      "id": "emo_gen",
+      "type": "generate",
+      "x": 230,
+      "y": -220,
+      "config": {
+        "temperature": "0.4",
+        "max_length": 220,
+        "stop": "",
+        "stream": false
+      }
+    },
+    {
+      "id": "emo_clean",
+      "type": "regex",
+      "x": 460,
+      "y": -220,
+      "config": {
+        "pattern": "<think>[\\s\\S]*?</think>",
+        "flags": "g",
+        "replace": ""
+      }
+    },
+    {
+      "id": "emo_write",
+      "type": "memory_write",
+      "x": 690,
+      "y": -300,
+      "config": {
+        "store": "emotions",
+        "mode": "append",
+        "maxEntries": 20
+      }
+    },
+    {
+      "id": "sys",
+      "type": "system_prompt",
+      "x": 230,
+      "y": 0,
+      "config": {
+        "text": ""
+      }
+    },
+    {
+      "id": "cp",
+      "type": "chat_prompt",
+      "x": 460,
+      "y": 0,
+      "config": {
+        "memoryHeader": "[Inner emotional guidance - shape your reply with this, never mention or quote it]",
+        "trim": true
+      }
+    },
+    {
+      "id": "gen",
+      "type": "generate",
+      "x": 690,
+      "y": 0,
+      "config": {
+        "temperature": "",
+        "max_length": 0,
+        "stop": "",
+        "stream": true
+      }
+    },
+    {
+      "id": "out",
+      "type": "chat_output",
+      "x": 920,
+      "y": 0,
+      "config": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "e0",
+      "from": "sys_char",
+      "fromPort": "text",
+      "to": "once",
+      "toPort": "text"
+    },
+    {
+      "id": "e1",
+      "from": "once",
+      "fromPort": "text",
+      "to": "sum_tpl",
+      "toPort": "a"
+    },
+    {
+      "id": "e2",
+      "from": "sum_tpl",
+      "fromPort": "text",
+      "to": "sum_gen",
+      "toPort": "prompt"
+    },
+    {
+      "id": "e3",
+      "from": "sum_gen",
+      "fromPort": "text",
+      "to": "sum_write",
+      "toPort": "text"
+    },
+    {
+      "id": "e4",
+      "from": "sum_read",
+      "fromPort": "text",
+      "to": "emo_ctx",
+      "toPort": "a"
+    },
+    {
+      "id": "e5",
+      "from": "emo_read",
+      "fromPort": "text",
+      "to": "emo_ctx",
+      "toPort": "b"
+    },
+    {
+      "id": "e6",
+      "from": "in",
+      "fromPort": "history",
+      "to": "emo_ctx",
+      "toPort": "c"
+    },
+    {
+      "id": "e7",
+      "from": "emo_rules",
+      "fromPort": "text",
+      "to": "emo_wrap",
+      "toPort": "system"
+    },
+    {
+      "id": "e8",
+      "from": "emo_ctx",
+      "fromPort": "text",
+      "to": "emo_wrap",
+      "toPort": "user"
+    },
+    {
+      "id": "e9",
+      "from": "emo_wrap",
+      "fromPort": "prompt",
+      "to": "emo_gen",
+      "toPort": "prompt"
+    },
+    {
+      "id": "e10",
+      "from": "emo_gen",
+      "fromPort": "text",
+      "to": "emo_clean",
+      "toPort": "text"
+    },
+    {
+      "id": "e11",
+      "from": "emo_clean",
+      "fromPort": "text",
+      "to": "emo_write",
+      "toPort": "text"
+    },
+    {
+      "id": "e12",
+      "from": "emo_clean",
+      "fromPort": "text",
+      "to": "cp",
+      "toPort": "memory"
+    },
+    {
+      "id": "e13",
+      "from": "sys",
+      "fromPort": "text",
+      "to": "cp",
+      "toPort": "system"
+    },
+    {
+      "id": "e14",
+      "from": "in",
+      "fromPort": "history",
+      "to": "cp",
+      "toPort": "history"
+    },
+    {
+      "id": "e15",
+      "from": "cp",
+      "fromPort": "prompt",
+      "to": "gen",
+      "toPort": "prompt"
+    },
+    {
+      "id": "e16",
+      "from": "gen",
+      "fromPort": "text",
+      "to": "out",
+      "toPort": "text"
+    }
+  ]
+}

@@ -1,0 +1,181 @@
+{
+ "version": 1,
+ "name": "Long chat: rolling summary + recall",
+ "nodes": [
+  {
+   "id": "in",
+   "type": "chat_input",
+   "x": 30,
+   "y": 300,
+   "config": {}
+  },
+  {
+   "id": "sys",
+   "type": "system_prompt",
+   "x": 30,
+   "y": 20,
+   "config": {}
+  },
+  {
+   "id": "every",
+   "type": "every_n",
+   "x": 290,
+   "y": 420,
+   "config": {
+    "name": "Every 5 turns",
+    "mode": "every N turns",
+    "n": 5,
+    "offset": 0
+   }
+  },
+  {
+   "id": "sum",
+   "type": "summarize",
+   "x": 540,
+   "y": 420,
+   "config": {
+    "threshold": 600,
+    "target": 150,
+    "store": "summary"
+   }
+  },
+  {
+   "id": "sumr",
+   "type": "memory_read",
+   "x": 30,
+   "y": 110,
+   "config": {
+    "name": "Story so far",
+    "store": "summary",
+    "lastN": 1
+   }
+  },
+  {
+   "id": "srch",
+   "type": "memory_search",
+   "x": 30,
+   "y": 200,
+   "config": {
+    "store": "notes",
+    "topK": 3,
+    "method": "keyword"
+   }
+  },
+  {
+   "id": "tpl",
+   "type": "template",
+   "x": 290,
+   "y": 60,
+   "config": {
+    "text": "{{a}}\n\n[Story so far]\n{{b}}\n\n[Relevant notes]\n{{c}}"
+   }
+  },
+  {
+   "id": "cp",
+   "type": "chat_prompt",
+   "x": 540,
+   "y": 160,
+   "config": {}
+  },
+  {
+   "id": "gen",
+   "type": "generate",
+   "x": 790,
+   "y": 160,
+   "config": {
+    "stream": true
+   }
+  },
+  {
+   "id": "out",
+   "type": "chat_output",
+   "x": 1040,
+   "y": 160,
+   "config": {}
+  },
+  {
+   "id": "mw",
+   "type": "memory_write",
+   "x": 290,
+   "y": 300,
+   "config": {
+    "name": "Remember user lines",
+    "store": "notes",
+    "mode": "append",
+    "maxEntries": 200
+   }
+  }
+ ],
+ "edges": [
+  {
+   "id": "e1",
+   "from": "sys",
+   "fromPort": "text",
+   "to": "tpl",
+   "toPort": "a"
+  },
+  {
+   "id": "e2",
+   "from": "sumr",
+   "fromPort": "text",
+   "to": "tpl",
+   "toPort": "b"
+  },
+  {
+   "id": "e3",
+   "from": "srch",
+   "fromPort": "text",
+   "to": "tpl",
+   "toPort": "c"
+  },
+  {
+   "id": "e4",
+   "from": "tpl",
+   "fromPort": "text",
+   "to": "cp",
+   "toPort": "system"
+  },
+  {
+   "id": "e5",
+   "from": "in",
+   "fromPort": "history",
+   "to": "cp",
+   "toPort": "history"
+  },
+  {
+   "id": "e6",
+   "from": "cp",
+   "fromPort": "prompt",
+   "to": "gen",
+   "toPort": "prompt"
+  },
+  {
+   "id": "e7",
+   "from": "gen",
+   "fromPort": "text",
+   "to": "out",
+   "toPort": "text"
+  },
+  {
+   "id": "e8",
+   "from": "in",
+   "fromPort": "history",
+   "to": "every",
+   "toPort": "text"
+  },
+  {
+   "id": "e9",
+   "from": "every",
+   "fromPort": "text",
+   "to": "sum",
+   "toPort": "history"
+  },
+  {
+   "id": "e10",
+   "from": "in",
+   "fromPort": "message",
+   "to": "mw",
+   "toPort": "text"
+  }
+ ]
+}

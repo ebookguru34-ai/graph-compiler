@@ -1,0 +1,63 @@
+# graphc: Prompt Graph compiler
+
+Compiles a **Prompt Graph Chat** graph (the JSON you export from the app's graph editor) into
+plain, readable **Python** that runs on its own against KoboldCPP. You can use it in a Discord bot,
+a game or a script without the browser app. It needs only the Python 3.8+ standard library.
+
+```
+python graphc.py compile my-graph.json --target python -o out/
+cd out && python chat_cli.py --template ChatML [--character card.png]
+```
+
+On Windows you can drag the graph `.json` onto **compile.bat**. You can also drop a character
+card as a second argument: `compile.bat graph.json card.png`.
+
+Other commands: `python graphc.py check graph.json` validates a graph and prints its run order.
+`python graphc.py nodes` lists the supported node types.
+
+## What you get (`out/`)
+
+| file | what |
+|---|---|
+| `<graph_name>.py` | `run_turn(history, user_msg, ctx) -> TurnResult(reply, trace, turn_id, history, ...)`. One commented block per node in run order, with each wire as a variable. Condition, Compare, Every N and Manual Trigger become `if` blocks, and SKIP spreads the same way it does in the app. It also holds `GRAPH_JSON`, the original graph, so you can import it back into the app. |
+| `pgc_runtime/` | The runtime. It covers KoboldCPP generate, SSE streaming, tokencount and embeddings; the app's instruct templates; prompt safety (assistant cue, turn stops, echo strip); trimming to the token budget; memory stores with turn-tagged rollback; profiles (commits, validation, clamp, `+N` deltas, decay and drift rules, revert); BM25 and embedding search; JSON extract; and summarize. Data goes in a JSON folder, one file per key, using the app's keys. |
+| `chat_cli.py` | Terminal chat. `/regen` and `/undo` roll back that turn's memory and profile writes. `/trigger <id>` arms a Manual Trigger, and `/trace` prints the node trace. |
+| `README.md` | Embedding guide covering the API, regenerate and rollback, a Discord bot and a game NPC. |
+| `character.json/png` | Added only with `--character`. It is the default character for `chat_cli`. |
+
+Characters can be the app's own export (`pgc_character_v1`), Tavern V1, or V2/V3 cards, as JSON or as PNG
+(`chara` / `ccv3` chunks). The character id namespaces memory and profiles, just as it does in the app.
+
+## Supported nodes
+
+All 22 node types are supported: chat_input, system_prompt, chat_prompt, template, instruct_wrap,
+generate, persona, memory_read, memory_write, profile, profile_update, stats, compare, every_n,
+manual_trigger, json_extract, summarize, memory_search, merge, regex, condition and chat_output.
+The semantics, defaults and skip rules are ported from `src/graph/nodes.ts` and `runner.ts`.
+An unknown node type, a cycle or a malformed file fails at compile time with a clear message.
+
+JavaScript regexes (Regex and Condition nodes) are translated to Python `re`. This covers flags
+`gimsu`, named groups, and `$1`, `$&`, `$<name>` and `$$` in replacements. Lookbehind and other
+features shared by JS and Python work. Exotic JS-only syntax (for example the `v` flag) does not.
+
+## Tests
+
+```
+python tests/run_tests.py        # compile all examples, run them, compare with the app's runner
+python tests/test_character.py   # character cards + chat_cli end to end
+```
+
+`tests/fake_kobold.py` is a deterministic fake KoboldCPP. Its replies depend only on the prompt,
+and it includes leaked `User:` lines, `<think>` blocks and JSON with trailing commas. `run_tests.py`
+does three things. It compiles every graph in `examples/`: the app's five built-in examples, an
+emotion-assessor graph, and `all-nodes.json`, which uses every node type. It runs a 10-step scenario
+(chat, regenerate, manual trigger, undo) with and without a character. Then it runs the same scenario
+through the **app's own `runGraph`**, bundled with esbuild and run in node with fetch pointed at the
+fake server. For each graph it compares the replies, every request body sent to KoboldCPP and the
+final storage contents (ids and timestamps normalized). Set `APP_DIR` to the app checkout, which
+needs `node_modules`. Without node, the parity step is skipped.
+
+## TypeScript target
+
+TODO: `--target ts` is not implemented yet and exits with an error. The plan is to emit the same
+block structure against the app's own `src/graph` modules.

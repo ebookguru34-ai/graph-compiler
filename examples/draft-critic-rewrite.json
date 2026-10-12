@@ -1,0 +1,89 @@
+{
+ "version": 1,
+ "name": "Draft + critic rewrite",
+ "nodes": [
+  {
+   "id": "in",
+   "type": "chat_input",
+   "x": 30,
+   "y": 160,
+   "config": {}
+  },
+  {
+   "id": "sys",
+   "type": "system_prompt",
+   "x": 30,
+   "y": 30,
+   "config": {}
+  },
+  {
+   "id": "cp",
+   "type": "chat_prompt",
+   "x": 280,
+   "y": 60,
+   "config": {}
+  },
+  {
+   "id": "gen",
+   "type": "generate",
+   "x": 520,
+   "y": 40,
+   "config": {
+    "stream": false
+   }
+  },
+  {
+   "id": "crit",
+   "type": "persona",
+   "x": 760,
+   "y": 120,
+   "config": {
+    "stream": true
+   }
+  },
+  {
+   "id": "out",
+   "type": "chat_output",
+   "x": 1010,
+   "y": 160,
+   "config": {}
+  }
+ ],
+ "edges": [
+  {
+   "id": "e1",
+   "from": "sys",
+   "fromPort": "text",
+   "to": "cp",
+   "toPort": "system"
+  },
+  {
+   "id": "e2",
+   "from": "in",
+   "fromPort": "history",
+   "to": "cp",
+   "toPort": "history"
+  },
+  {
+   "id": "e3",
+   "from": "cp",
+   "fromPort": "prompt",
+   "to": "gen",
+   "toPort": "prompt"
+  },
+  {
+   "id": "e4",
+   "from": "gen",
+   "fromPort": "text",
+   "to": "crit",
+   "toPort": "text"
+  },
+  {
+   "id": "e5",
+   "from": "crit",
+   "fromPort": "text",
+   "to": "out",
+   "toPort": "text"
+  }
+ ]
+}
