@@ -3,3 +3,7 @@ __pycache__/
 *_out/
 pgc_data/
 /out/
+# knowledge pack data (generated locally, GPL-3.0 catalog) is never committed
+*.pack.json
+*.pack.zip
+!tests/fixtures/mini.pack.json

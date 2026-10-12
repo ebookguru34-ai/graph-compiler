@@ -72,6 +72,8 @@ def main(argv=None):
     c.add_argument("--docs", action="append", default=[], metavar="FILE", help="import a .txt/.md document into the global RAG collection; repeatable")
     c.add_argument("--char-lore", action="append", default=[], metavar="FILE", help="like --lore but into the --character's own book")
     c.add_argument("--char-docs", action="append", default=[], metavar="FILE", help="like --docs but into the --character's own collection")
+    c.add_argument("--pack", action="append", default=[], metavar="FILE", help="install a knowledge pack (.json/.zip from tools/oghma_to_pack.py) into the data dir; repeatable")
+    c.add_argument("--pack-off", action="append", default=[], metavar="ID", help="install the pack switched off (enable later with pgc_runtime.manage pack <id> on)")
     c.add_argument("--chunk-size", type=int, default=800); c.add_argument("--overlap", type=int, default=100)
     k = sub.add_parser("check", help="validate a graph")
     k.add_argument("graph")
@@ -93,7 +95,7 @@ def main(argv=None):
             return 2
         out = a.out or os.path.join(os.path.dirname(os.path.abspath(a.graph)), slug(a.name or g.get("name") or "graph") + "_out")
         module = compile_python(g, out, a.name, a.character)
-        if a.lore or a.docs or a.char_lore or a.char_docs:
+        if a.lore or a.docs or a.char_lore or a.char_docs or a.pack:
             from pgc_runtime.kv import KV
             from pgc_runtime import manage, character as chmod
             kv = KV(os.path.join(out, "pgc_data"))
@@ -108,6 +110,12 @@ def main(argv=None):
                 print(f"  doc  {f}: {len(manage.import_doc(kv, f, None, a.chunk_size, a.overlap)['chunks'])} chunks (global)")
             for f in a.char_docs:
                 print(f"  doc  {f}: {len(manage.import_doc(kv, f, cid, a.chunk_size, a.overlap)['chunks'])} chunks ({cid})")
+            from pgc_runtime import packs as pk
+            for f in a.pack:
+                p = manage.install_pack(kv, f)
+                if p["id"] in a.pack_off:
+                    pk.set_pack_settings(kv, p["id"], enabled=False)
+                print(f"  pack {f}: {p['id']} ({len(p['entries'])} entries, {'off' if p['id'] in a.pack_off else 'on'})")
         print(f"Compiled {g.get('name')!r} ({len(g['nodes'])} nodes) -> {os.path.join(out, module + '.py')}")
         print(f"  run:  cd \"{out}\" && python chat_cli.py")
         return 0

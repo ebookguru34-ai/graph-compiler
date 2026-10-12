@@ -5,7 +5,7 @@ Every function has the signature  fn(inputs: dict, cfg: dict, env: Env, node_id:
 """
 import math
 
-from . import kobold, memory as mem, profile as prof, search, lore, rag
+from . import kobold, memory as mem, profile as prof, search, lore, rag, packs
 from .safety import ensure_assistant_cue, strip_echo, turn_stops
 from .templates import render_prompt
 from .util import (SKIP, estimate_tokens, fill, js_number, js_regex, js_replace, js_str, js_string_of,
@@ -355,7 +355,8 @@ def lorebook(i, c, env, nid):
     msgs = [m for m in env.history if m.get("role") != "system"]
     scan = "\n".join(([m["content"] for m in msgs[-int(depth):]] if depth > 0 else []) + ([js_str(i.get("text"))] if "text" in i else []))
     b = js_number(c.get("budget")); b = 0 if math.isnan(b) else b
-    r = lore.scan_lore(env.ctx.kv, scan, env.ctx.mem_ns, js_string_of(c.get("scope")), b, _s(c.get("header")), _unescape_nl(_s(c.get("joiner"), "\n\n")))
+    r = lore.scan_lore(env.ctx.kv, scan, env.ctx.mem_ns, js_string_of(c.get("scope")), b, _s(c.get("header")), _unescape_nl(_s(c.get("joiner"), "\n\n")),
+                       packs.parse_sel(c.get("packs"), c.get("packIds")), _s(c.get("knowledge"), "basic"))
     return {"text": r["text"], "fired": "\n".join("%s %s (%s): %s, ~%d tok" % ("✓" if f["included"] else "✗", f["title"], f["source"], f["reason"], f["tokens"]) for f in r["fired"])}
 
 
@@ -367,7 +368,8 @@ def rag_retrieve(i, c, env, nid):
     b = js_number(c.get("budget")); b = 0 if math.isnan(b) else b
     r = rag.retrieve(env.ctx.kv, "\n".join(prev + [q]), env.ctx.mem_ns, js_string_of(c.get("scope")), js_string_of(c.get("method")),
                      int(num_or(c.get("topK"), 4)), ms, b, _s(c.get("header")), _unescape_nl(_s(c.get("joiner"), "\n\n")),
-                     None if env.dry else (lambda t: kobold.embeddings(env.ctx.kobold_url, t)))
+                     None if env.dry else (lambda t: kobold.embeddings(env.ctx.kobold_url, t)),
+                     packs.parse_sel(c.get("packs"), c.get("packIds")), _s(c.get("knowledge"), "basic"))
     out = {"text": r["text"], "sources": "\n".join("%s %s #%d (%s) %.3f%s" % ("✓" if h["included"] else "✗", h["doc"], h["chunk"] + 1, h["source"], h["score"], "" if h["included"] else " over budget") for h in r["hits"]),
            "_method": r["method"]}
     if r["note"]:
@@ -416,8 +418,8 @@ NODE_DEFS = {
         "instruction": "Summarize the following conversation in about {{target}} words. Keep names, facts, decisions and open threads. Write plain prose, no preamble.\n\n{{text}}",
         "store": "", "temperature": "0.3", "max_length": 400}, llm=True),
     "memory_search": _d("Memory Search", ["query"], ["text"], {"store": "notes", "topK": 3, "method": "keyword", "joiner": "\\n"}),
-    "lorebook": _d("Lorebook", ["text"], ["text", "fired"], {"scope": "character + global", "depth": 4, "budget": 500, "header": "[World info]", "joiner": "\\n\\n"}),
-    "rag_retrieve": _d("RAG Retrieve", ["query"], ["text", "sources"], {"scope": "character + global", "method": "hybrid", "history": 0, "topK": 4, "minScore": 0,
+    "lorebook": _d("Lorebook", ["text"], ["text", "fired"], {"packs": "all enabled", "packIds": "", "knowledge": "basic", "scope": "character + global", "depth": 4, "budget": 500, "header": "[World info]", "joiner": "\\n\\n"}),
+    "rag_retrieve": _d("RAG Retrieve", ["query"], ["text", "sources"], {"packs": "all enabled", "packIds": "", "knowledge": "basic", "scope": "character + global", "method": "hybrid", "history": 0, "topK": 4, "minScore": 0,
                                                                      "budget": 600, "header": "[Reference]", "joiner": "\\n\\n"}),
     "merge": _d("Merge", ["a", "b"], ["text"], {"text": "{{a}}\n\n{{b}}"}),
     "regex": _d("Regex Transform", ["text"], ["text"], {"pattern": "\\s+$", "flags": "g", "replace": ""}),

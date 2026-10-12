@@ -107,7 +107,8 @@ def drop_vectors(kv, d):
         kv.remove_item("pgc.emb." + js_hash(c))
 
 
-def retrieve(kv, query, mem_ns, scope, method, top_k, min_score, budget, header, joiner, embed):
+def retrieve(kv, query, mem_ns, scope, method, top_k, min_score, budget, header, joiner, embed, packs_sel=None, level=None):
+    from . import packs
     allc = []
 
     def add(ns, source):
@@ -118,15 +119,36 @@ def retrieve(kv, query, mem_ns, scope, method, top_k, min_score, budget, header,
         add(mem_ns, "character")
     if scope != "character":
         add(None, "global")
+    n_user = len(allc)
+    if packs_sel:
+        for p, e, idx in packs.active_entries(kv, mem_ns, packs_sel):
+            allc.append({"doc": p["name"] + ": " + e["title"], "source": "pack:" + p["id"], "chunk": idx, "text": packs.pack_search_text(e, level),
+                         "inject": packs.pack_text(e, level), "pack": p["id"], "entry": e})
     if not query.strip() or not allc:
         return {"text": "", "hits": [], "method": "none", "note": ""}
     docs = [x["text"] for x in allc]
     note = ""
     if method != "keyword" and embed:
         try:
-            vecs = cached_embeddings(kv, [query] + docs, embed)
+            vecs = cached_embeddings(kv, [query] + docs[:n_user], embed)
             qv, dv = vecs[0], vecs[1:]
             cos = [cosine(qv, v) for v in dv]
+            by_pack, notes, pv = {}, [], {}
+            for x in allc[n_user:]:
+                by_pack.setdefault(x["pack"], []).append(x["entry"])
+            for pid, ents in by_pack.items():
+                v = packs.pack_vectors(kv, pid)
+                miss = sum(1 for e in ents if e["checksum"] not in v)
+                if miss and miss <= packs.LAZY_EMBED_MAX:
+                    packs.embed_missing(kv, pid, ents, embed); v = packs.pack_vectors(kv, pid)
+                elif miss:
+                    notes.append("pack %s: %d/%d articles not embedded, keyword only (embed it in Knowledge → Packs)" % (pid, miss, len(ents)))
+                pv[pid] = v
+            for x in allc[n_user:]:
+                v = pv[x["pack"]].get(x["entry"]["checksum"])
+                cos.append(cosine(qv, v) if v else 0)
+            if notes:
+                note = "; ".join(notes)
             if method == "hybrid":
                 b = {r["i"]: r["score"] for r in bm25_rank(query, docs)}
                 mx = max([0] + list(b.values())) or 1
@@ -140,11 +162,13 @@ def retrieve(kv, query, mem_ns, scope, method, top_k, min_score, budget, header,
         if method != "keyword":
             note = "no embeddings (dry run), used keyword"
         method = "keyword"; scored = bm25_rank(query, docs)
+    inj = lambda i: allc[i].get("inject", docs[i])  # noqa: E731
     top = [r for r in scored if r["score"] >= min_score][:max(1, top_k)]
     chosen, hits = [], []
     for r in top:
-        fits = not (budget > 0) or estimate_tokens(joiner.join(chosen + [docs[r["i"]]])) <= budget
+        fits = not (budget > 0) or estimate_tokens(joiner.join(chosen + [inj(r["i"])])) <= budget
         if fits:
-            chosen.append(docs[r["i"]])
-        hits.append({**allc[r["i"]], "score": r["score"], "included": fits})
+            chosen.append(inj(r["i"]))
+        h = {k: v for k, v in allc[r["i"]].items() if k not in ("inject", "pack", "entry")}
+        hits.append({**h, "score": r["score"], "included": fits})
     return {"text": ((header + "\n") if header else "") + joiner.join(chosen) if chosen else "", "hits": hits, "method": method, "note": note}

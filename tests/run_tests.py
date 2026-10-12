@@ -42,7 +42,11 @@ def seed_for(ns):
     txt = open(os.path.join(FX, "notes.txt"), encoding="utf-8", newline="").read()
     doc = lambda i, n, t, s: {"id": "d%d" % i, "name": n, "addedAt": 0, "size": s, "overlap": 60, "chunks": rag.chunk_text(t, s, 60)}  # noqa: E731
     seed = {"pgc.profile." + (ns or "_global"): json.dumps(p),
-            "pgc.lore._global": json.dumps({"entries": world}), "pgc.rag._global": json.dumps({"docs": [doc(1, "handbook.md", md, 300)]})}
+            "pgc.lore._global": json.dumps({"entries": world}),
+            # knowledge pack: on globally with the esoteric tier off; the character (char-mira) turns it off by override
+            "pgc.pack.mini-test": open(os.path.join(FX, "mini.pack.json"), encoding="utf-8").read(),
+            "pgc.packs.settings": json.dumps({"mini-test": {"enabled": True, "cats": {"esoteric": False}}}),
+            "pgc.packs.char.char-mira": json.dumps({"mini-test": "off"}), "pgc.rag._global": json.dumps({"docs": [doc(1, "handbook.md", md, 300)]})}
     for k, e in enumerate(book):
         e["id"] = "b%d" % k
     if ns:

@@ -106,10 +106,13 @@ def key_matches(key, text, case_sensitive, whole_word):
     return key in text if case_sensitive else key.lower() in text.lower()
 
 
-def scan_lore(kv, text, mem_ns, scope, budget, header, joiner):
+def scan_lore(kv, text, mem_ns, scope, budget, header, joiner, packs_sel=None, level=None):
+    """packs_sel = packs.parse_sel(...) to include knowledge packs (None = none)."""
+    from . import packs
     want_char, want_global = scope != "global", scope != "character"
     allv = ([(e, "character") for e in load_lore(kv, mem_ns)] if want_char and mem_ns else []) + \
-           ([(e, "global") for e in load_lore(kv)] if want_global else [])
+           ([(e, "global") for e in load_lore(kv)] if want_global else []) + \
+           (packs.pack_lore(kv, mem_ns, packs_sel, level) if packs_sel else [])
     hits = []
     for i, (e, source) in enumerate(allv):
         if not e["enabled"] or not e["content"].strip():

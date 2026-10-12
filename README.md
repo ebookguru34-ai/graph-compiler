@@ -73,11 +73,40 @@ python -m pgc_runtime.manage --data out/pgc_data export-lore world.json
 RAG uses KoboldCPP `/v1/embeddings`, which needs an embeddings model. Vectors are cached per chunk hash in
 `pgc.emb.*`. If embeddings fail, retrieval falls back to BM25 keyword search, as it does in the app.
 
+## Knowledge packs (`--pack`)
+
+Knowledge packs are read-only lore sets, such as the Skyrim Oghma Infinium catalog. They feed the Lorebook and RAG Retrieve nodes the same way they do in the app's 📚 Knowledge → Packs. The node options are `packs` (`all enabled` / `none` / `selected` + `packIds`) and `knowledge` (`basic` / `advanced`). A pack that is off contributes nothing.
+
+Build the Oghma pack from the CHIM / HerikaServer catalog:
+
+```
+python tools/oghma_to_pack.py resources/oghma/skyrim-official/catalogs/<version>/articles.json -o skyrim-oghma-v2.pack.json
+python tools/oghma_to_pack.py articles.json --license LICENSE -o skyrim-oghma-v2.pack.zip     # zip = pack.json + LICENSE + NOTICE
+```
+
+The catalog is **GPL-3.0** (the HerikaServer license). The pack carries the license text and attribution.
+This repo ships **only the converter**, not the catalog data. Generate the pack yourself and keep the license with it if you share it.
+
+Use it:
+
+```
+python graphc.py compile graph.json -o out/ --pack skyrim-oghma-v2.pack.zip [--pack-off skyrim-oghma-v2]
+python -m pgc_runtime.manage --data out/pgc_data packs                                # list, categories, counts
+python -m pgc_runtime.manage --data out/pgc_data pack skyrim-oghma-v2 off             # global toggle (on|off)
+python -m pgc_runtime.manage --data out/pgc_data pack skyrim-oghma-v2 cat esoteric off   # category ("cat all on")
+python -m pgc_runtime.manage --data out/pgc_data --ns char-mira pack skyrim-oghma-v2 on  # character override (inherit|on|off)
+python -m pgc_runtime.manage --data out/pgc_data embed-pack skyrim-oghma-v2 --url http://localhost:5001
+python -m pgc_runtime.manage --data out/pgc_data install-pack other.pack.json / uninstall-pack <id>
+```
+
+Keys match the app's: `pgc.pack.<id>` (pack data), `pgc.packs.settings`, `pgc.packs.char.<charId>` and `pgc.packemb.<id>` (vectors by article checksum).
+
 ## Tests
 
 ```
 python tests/run_tests.py        # compile all examples, run them, compare with the app's runner
 python tests/test_character.py   # character cards + chat_cli end to end
+python tests/test_packs.py       # knowledge packs: converter, on/off rules, lazy embeddings, manage CLI, app parity
 python tests/test_knowledge.py   # lorebook + RAG units, and chunking/parsing/matching parity with the app's TS
 ```
 

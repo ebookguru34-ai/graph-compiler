@@ -3,6 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { runGraph } from '/workspace/prompt-graph/chat/src/graph/runner';
 import { setMemStorage } from '/workspace/prompt-graph/chat/src/graph/memory';
+import { registerPack, validatePack } from '/workspace/prompt-graph/chat/src/graph/packs';
 import { rollbackTurns } from '/workspace/prompt-graph/chat/src/graph/profile';
 import { TEMPLATE_PRESETS, DEFAULT_SAMPLERS } from '/workspace/prompt-graph/chat/src/templates';
 import { characterSystemPrompt, substChar } from '/workspace/prompt-graph/chat/src/charData';
@@ -10,6 +11,7 @@ import { characterSystemPrompt, substChar } from '/workspace/prompt-graph/chat/s
 const job = JSON.parse(readFileSync(process.argv[2], 'utf8'));
 const m = new Map<string, string>(Object.entries(job.seed || {}));
 setMemStorage({ getItem: (k) => m.get(k) ?? null, setItem: (k, v) => { m.set(k, v); }, removeItem: (k: string) => { m.delete(k); }, keys: () => [...m.keys()] } as any);
+for (const [k, v] of m) if (k.startsWith('pgc.pack.')) registerPack(validatePack(JSON.parse(v)));
 const realFetch = globalThis.fetch;
 (globalThis as any).fetch = (u: string, init: any) => realFetch(`http://127.0.0.1:${job.port}` + String(u).replace(/^\/kobold/, ''), init);
 
